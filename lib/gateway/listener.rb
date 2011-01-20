@@ -33,27 +33,27 @@ module Gateway
 
     private
 
-def handle_notification(notification)
-  log "got notification: #{notification}"
-  message = JSON.parse(notification)['doc']
-  Fiber.new {
-    result = despatch(message) # non-blocking
-    @db.save_doc(message.merge(status: "forwarded", result: result))  # blocking
-  }.resume
-end
+      def handle_notification(notification)
+        log "got notification: #{notification}"
+        message = JSON.parse(notification)['doc']
+        Fiber.new {
+          result = despatch(message) # non-blocking
+          @db.save_doc(message.merge(status: "forwarded", result: result))  # blocking
+        }.resume
+      end
 
-def despatch(message)
-  http = http_request({id: message['_id'], broadcast: message['text']})
-  http.response_header.status == 200 ? "success" : "failed"
-end
+      def despatch(message)
+        http = http_request({id: message['_id'], broadcast: message['text']})
+        http.response_header.status == 200 ? "success" : "failed"
+      end
 
-def http_request(data = {})
-  f = Fiber.current
-  http = EventMachine::HttpRequest.new(TARGET_URL).post :body => data
-  http.callback { log "Http request: #{http.response_header.status}"; f.resume(http) }
-  http.errback  { log "Http request error: #{data}"; f.resume(http) }
-  return Fiber.yield
-end
+      def http_request(data = {})
+        f = Fiber.current
+        http = EventMachine::HttpRequest.new(TARGET_URL).post :body => data
+        http.callback { log "Http request: #{http.response_header.status}"; f.resume(http) }
+        http.errback  { log "Http request error: #{data}"; f.resume(http) }
+        return Fiber.yield
+      end
 
       def update_all_as_missed(messages)
         log "Found #{messages.size} missed messages"
