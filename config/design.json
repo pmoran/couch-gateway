@@ -1,0 +1,20 @@
+{
+  "_id" : "_design/app",
+  "views" : {
+    "unprocessed" : {
+      "map" : "function(doc){ if(!doc.status) { emit(doc.requested_at, doc.text) } }"
+    },
+    "missed" : {
+      "map" : "function(doc){ if(doc.status == 'missed') { emit(doc.requested_at, doc.text) } }"
+    },
+    "forwarded" : {
+      "map" : "function(doc){ if(doc.status == 'forwarded') { emit(doc.requested_at, doc.text) } }"
+    },
+    "failed" : {
+      "map" : "function(doc){ if(doc.result == 'failed') { emit(doc.requested_at, doc.text) } }"
+    }
+  },
+  "filters": {
+    "pending": "function(doc, req) { if(doc.status != 'forwarded') { return true; } else { return false; }}"
+  }
+}
